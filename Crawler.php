@@ -22,6 +22,7 @@ class Crawler {
             $parselines2 = array();
             for ($page = 1; $page < 20; $page++) {
                 $link        = str_replace("#", $rarity, $mainlink . $page);
+                // TODO curl aus der schleife und wrappen
                 $curl_handle = curl_init();
                 curl_setopt($curl_handle, CURLOPT_URL, $link);
                 curl_setopt($curl_handle, CURLOPT_CONNECTTIMEOUT, 2);
@@ -74,6 +75,50 @@ class Crawler {
         $this->savePictures($editionshort, $edition[0], "rare");
         $this->savePictures($editionshort, $edition[1], "uncommon");
         $this->savePictures($editionshort, $edition[2], "common");
+    }
+
+    public function retrieveAvailableEditions()
+    {
+        $link        = 'http://magiccards.info/search.html';
+        $curl_handle = curl_init();
+        curl_setopt($curl_handle, CURLOPT_URL, $link);
+        curl_setopt($curl_handle, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl_handle, CURLOPT_USERAGENT, 'Boosterdraft');
+        $html        = curl_exec($curl_handle);
+        curl_close($curl_handle);
+        $editionOptions = explode('</select>', explode('id="edition"', $html)[1])[0];
+        $matches = [];
+        preg_match_all('/<option value="(.*)?\/(.*)?">(.*)?<\/option>/U', $editionOptions, $matches);
+        $data = [];
+        foreach ($matches[1] as $key => $editionShort) {
+            if (empty($editionShort)) {
+                continue;
+            }
+            $data[] = [
+                'edition_short' => $editionShort,
+                'language' => $matches[2][$key],
+                'edition_long' => $matches[3][$key],
+            ];
+        }
+        return $data;
+    }
+
+    /**
+     * Returns all editions found in cardtable
+     * @return string[]
+     */
+    public function getAlreadyCrawledEditions()
+    {
+        $table = "cardlinktable";
+        $sql   = "SELECT DISTINCT(edition) FROM $table";
+        include ("dbconnect.php");
+        $stmt  = $dbc->prepare($sql);
+        $stmt->execute();
+        while ($row   = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $editions[] = $row['edition'];
+        }
+        return $editions;
     }
 
 }
