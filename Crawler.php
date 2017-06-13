@@ -18,7 +18,7 @@ class Crawler {
         $edition      = array();
         ini_set('max_execution_time', 0);
 
-        foreach (array($rare, $uncommon, $common) as $rarity) {
+        foreach (array($rare, $uncommon, $common) as $key => $rarity) {
             $parselines2 = array();
             for ($page = 1; $page < 20; $page++) {
                 $link        = str_replace("#", $rarity, $mainlink . $page);
@@ -30,11 +30,16 @@ class Crawler {
                 curl_setopt($curl_handle, CURLOPT_USERAGENT, 'Boosterdraft');
                 $html        = curl_exec($curl_handle);
                 curl_close($curl_handle);
-                if (strpos($html, "your query did not match any cards.")) {
-                    echo $link . "<br>";
-                    break;
+                if (strpos($html, "Your query did not match any cards.")) {
+                    echo "$editionshort - No cards found: ";
+                    echo $link . "\n";
+                    break 2;
                 }
                 $html       = explode("<table", $html);
+                if (!isset($html[4])) {
+                    // means there are no cards for the filter -> probably not in that language
+                    break 2;
+                }
                 $html       = $html[4];
                 $parselines = explode('src="', $html);
                 unset($parselines[0]);
@@ -49,14 +54,14 @@ class Crawler {
                     }
                 }
             }
-            $edition[] = array_keys($parselines2);
+            $edition[$key] = array_keys($parselines2);
         }
         return $edition;
     }
 
     public function savePictures($editionshort, $pictures, $rarity)
     {
-        echo "Saving $editionshort - $rarity " . count($pictures) . "<br>";
+        echo "Saving $editionshort - $rarity " . count($pictures) . "\n";
         $table = "cardlinktable";
         $sql   = "INSERT INTO $table (rarity, picturelink, edition) VALUES (?, ?, ?)";
         include ("dbconnect.php");
@@ -72,9 +77,15 @@ class Crawler {
 
     public function saveAllPics($editionshort, $edition)
     {
-        $this->savePictures($editionshort, $edition[0], "rare");
-        $this->savePictures($editionshort, $edition[1], "uncommon");
-        $this->savePictures($editionshort, $edition[2], "common");
+        if (!empty($edition[0])) {
+            $this->savePictures($editionshort, $edition[0], "rare");
+        }
+        if (!empty($edition[1])) {
+            $this->savePictures($editionshort, $edition[1], "uncommon");
+        }
+        if (!empty($edition[2])) {
+            $this->savePictures($editionshort, $edition[2], "common");
+        }
     }
 
     public function retrieveAvailableEditions()
