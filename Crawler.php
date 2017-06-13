@@ -35,7 +35,7 @@ class Crawler {
                     echo $link . "\n";
                     break 2;
                 }
-                $html       = explode("<table", $html);
+                $html = explode("<table", $html);
                 if (!isset($html[4])) {
                     // means there are no cards for the filter -> probably not in that language
                     break 2;
@@ -90,26 +90,27 @@ class Crawler {
 
     public function retrieveAvailableEditions()
     {
-        $link        = 'http://magiccards.info/search.html';
-        $curl_handle = curl_init();
+        $link           = 'http://magiccards.info/search.html';
+        $curl_handle    = curl_init();
         curl_setopt($curl_handle, CURLOPT_URL, $link);
         curl_setopt($curl_handle, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl_handle, CURLOPT_USERAGENT, 'Boosterdraft');
-        $html        = curl_exec($curl_handle);
+        $html           = curl_exec($curl_handle);
         curl_close($curl_handle);
         $editionOptions = explode('</select>', explode('id="edition"', $html)[1])[0];
-        $matches = [];
-        preg_match_all('/<option value="(.*)?\/(.*)?">(.*)?<\/option>/U', $editionOptions, $matches);
-        $data = [];
+        $matches        = [];
+        preg_match_all('/<option value="(.*)?\/(.*)?">(.*)?<\/option>/U',
+                $editionOptions, $matches);
+        $data           = [];
         foreach ($matches[1] as $key => $editionShort) {
             if (empty($editionShort)) {
                 continue;
             }
             $data[] = [
                 'edition_short' => $editionShort,
-                'language' => $matches[2][$key],
-                'edition_long' => $matches[3][$key],
+                'language'      => $matches[2][$key],
+                'edition_long'  => $matches[3][$key],
             ];
         }
         return $data;
@@ -130,6 +131,29 @@ class Crawler {
             $editions[] = $row['edition'];
         }
         return $editions;
+    }
+
+    public function crawl($languages = ['de'], $recrawlAlreadyCrawledEditions = false)
+    {
+        $editions               = $this->retrieveAvailableEditions();
+        $i                      = 0;
+        $alreadyCrawledEditions = $this->getAlreadyCrawledEditions();
+        if ($recrawlAlreadyCrawledEditions) {
+            $alreadyCrawledEditions = [];
+        }
+        foreach ($editions as $edi) {
+            $i++;
+            foreach ($languages as $language) {
+                $editionString = $edi['edition_short'] . '/' . $language;
+                if (in_array($editionString, $alreadyCrawledEditions)) {
+                    echo "$i/" . count($editions) . ' Skipped already crawled edition: ' . $edi['edition_long'] . "\n";
+                    continue;
+                }
+                $this->saveAllPics($editionString,
+                        $this->getPictures($editionString));
+                echo "$i/" . count($editions) . " Saved edition $editionString: " . $edi['edition_long'] . "\n";
+            }
+        }
     }
 
 }

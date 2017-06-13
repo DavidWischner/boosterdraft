@@ -43,9 +43,6 @@ class Booster {
         foreach ($this->cards as $cardlink) {
             $i++;
             echo '<img src="' . $cardlink . '"alt="Proxy" style="margin: 0pt 1px 1px 0pt;" height="319" width="222">';
-            /*        if($i%3 == 0) {
-              echo "<br>";
-              } */
         }
     }
 
@@ -55,6 +52,9 @@ class Booster {
         $sql      = "SELECT picturelink FROM $table WHERE edition= ? AND rarity = ? ORDER BY RAND() LIMIT 1";
         $result   = $this->ps($sql, array($editionshort, $rarity));
         $cardlink = $result->fetch();
+        if ($cardlink === false) {
+            throw new \Exception(sprintf('Unable to get card with rarity %s for edition %s', $rarity, $editionshort));
+        }
         return $cardlink['picturelink'];
     }
 
@@ -73,9 +73,6 @@ class Booster {
 }
 
 if (isset($_GET['edition'])) {
-    //$edition = get_pictures($_GET['edition']);
-    //echo $this->getRandomCard("wwk/de", "rare");
-
     $booster = new Booster($_GET['edition']);
     $booster->generateBooster();
     $booster->printBooster();
