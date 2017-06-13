@@ -33,13 +33,17 @@ function get_pictures($editionshort)
             $parselines = explode('src="', $html);
             unset($parselines[0]);
             foreach ($parselines as $line) {
-                $help = explode('"', $line);
-                if (!$help == strpos($help[0], "table")) {
-                    $parselines2[] = $help[0];
+                $imageSource = explode('"', $line);
+                if (!$imageSource == strpos($imageSource[0], "table")) {
+                    // if entry already present -> last page found -> continue with next rarity
+                    if (isset($parselines2[$imageSource[0]])) {
+                        break 2;
+                    }
+                    $parselines2[$imageSource[0]] = '';
                 }
             }
         }
-        $edition[] = $parselines2;
+        $edition[] = array_keys($parselines2);
     }
     return $edition;
 }
