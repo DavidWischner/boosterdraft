@@ -13,11 +13,19 @@ class Booster {
         $this->edition = $edition;
     }
 
-    public function generateBooster()
+    public function generateBooster($numOfRares = 1, $numOfUncommons = 3, $numOfCommons = 11)
     {
         $this->cards   = array();
-        $this->cards[] = $this->getRandomCard($this->edition, "rare");
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < $numOfRares; $i++) {
+            //doppelte verhindern
+            $newcard = $this->getRandomCard($this->edition, "rare");
+            if (!in_array($newcard, $this->cards)) {
+                $this->cards[] = $newcard;
+            } else {
+                $i--;
+            }
+        }
+        for ($i = 0; $i < $numOfUncommons; $i++) {
             //doppelte verhindern
             $newcard = $this->getRandomCard($this->edition, "uncommon");
             if (!in_array($newcard, $this->cards)) {
@@ -26,7 +34,7 @@ class Booster {
                 $i--;
             }
         }
-        for ($i = 0; $i < 11; $i++) {
+        for ($i = 0; $i < $numOfCommons; $i++) {
             //doppelte verhindern
             $newcard = $this->getRandomCard($this->edition, "common");
             if (!in_array($newcard, $this->cards)) {
