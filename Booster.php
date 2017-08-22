@@ -48,7 +48,7 @@ class Booster {
     public function printBooster()
     {
         foreach ($this->cards as $cardlink) {
-            echo '<img src="' . $cardlink . '"alt="Proxy" style="margin: 0 1px 1px 0;" width="234">';
+            echo '<img src="' . $cardlink . '"alt="Proxy" style="margin: 0 0px 0px 0;" width="234">';
         }
     }
 

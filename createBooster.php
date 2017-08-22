@@ -3,7 +3,12 @@
         float: left;
         width: 100%;
     }
+    @media print {
+        body {margin-top: 0mm; margin-bottom: 0mm; 
+              margin-left: -0mm; margin-right: -10mm}
+    }
 </style>
+<body>
 <?php
 if (isset($_GET['edition'])) {
     require_once('Booster.php');
@@ -27,3 +32,4 @@ if (isset($_GET['edition'])) {
     <?php
 }
 ?>
+</body>
